@@ -27,7 +27,6 @@ struct Node{
   }
 };
 
-
 /***************************************************************************/
 template<typename keytype, typename valuetype>
 class RBTree{
@@ -484,161 +483,156 @@ int remove(keytype k){
   // - If the node we deleted is black and its replacement is either black or
   // nil then proceed to the appropriate case
 
+  Node<keytype, valuetype> *x;
+  Node<keytype, valuetype> *y;
+  Node<keytype, valuetype> *v;
+
   //2 NILL children
   if (z->leftChild == nullptr && z->rightChild == nullptr) {
-    if(z->key == 338){
-      cout << "here 1" << endl;
+    x = nullptr; // 2 nil children so the replacement is a nullptr
+
+    if(z->parent == nullptr) { //empty tree
+      delete z;
+      root = nullptr;
     }
-    run2Nil(z);
+
+    if(z == z->parent->leftChild){
+      z->parent->leftChild = x;
+    }
+    else {
+      z->parent->rightChild = x;
+    }
+
+    if(z->color == Red) {
+      //the node were deleting is red and its replacement is nil
+      delete z;
+      //we are done
+    }
+    //the node we deleted is black and its replacement is nil meaning black
+    else{
+      y = z->parent;
+      runCases(y, x);
+      delete z;
+    }
+
     return 1;
   }
   //2 NON-NIL children
   else if (z->leftChild != nullptr && z->rightChild != nullptr) {
-    run0Nil(z);
+
+    x = z->rightChild;
+    x = runSuccesor(x);
+
+    y = x->rightChild;
+    v = x;
+
+    if(x == x->parent->leftChild){
+      x->parent->leftChild = y;
+    }
+    else {
+      x->parent->rightChild = y;
+    }
+
+    if(x->parent->key != z->key){
+      v = x->parent;
+    }
+
+    if(z->color == Red) {
+      //z is red and x is nil or red
+      if(x == nullptr || x->color == Red){
+        x = runReplace(z,x);
+        //we are done
+      }
+      //The node we deleted is red and the replacement is black
+      else {
+        x = runReplace(z,x);
+        x->color = Red;
+        x = y; //x is now the replacements new right child
+        runCases(v, x);
+      }
+    }
+    else{ //the node we deleted is black
+      //the node we deleted is black and the replacement is nil
+      if(x == nullptr){
+        x = runReplace(z,x);
+        x = y; //x is now the replacements new right child
+        runCases(v, x);
+      }
+      //z is black and x is red. Color x black and we are done
+      else if(x->color == Red) {
+        x = runReplace(z,x);
+        x->color = Black;
+      }
+      //the node we deleted is black and the replacement is black
+      else {
+        x = runReplace(z,x);
+        x = y; //x is now the replacements new right child
+        runCases(v, x);
+      }
+
+    }
+
     delete z;
     return 1;
   }
   //1 NIL child
   else{
-    run1Nil(z);
+    //set replacement
+    if (z->leftChild == nullptr && z->rightChild != nullptr) {
+      x = z->rightChild;
+    }
+    else {
+      x = z->leftChild;
+    }
+
+    v = x;
+
+    if(z->color == Red) {
+      ///z is red and x is nil or red
+      if(x == nullptr || x->color == Red){
+        x = runReplace(z,x);
+        //we are done
+      }
+      //The node we deleted is red and the replacement is black
+      else {
+        x = runReplace(z,x);
+        x->color = Red;
+        x = y; //x is now the replacements new right child
+        runCases(v, x);
+      }
+    }
+    else{ //the node we deleted is black
+      //z is black and x is red. Color x black and we are done
+      if(x->color == Red){
+        if(z->parent == nullptr){//deleting root so only 2 things left
+          root = x;
+          x->parent = z->parent;
+          delete z;
+        }
+        else if(z == z->parent->leftChild){
+          z->parent->leftChild = x;
+          x->parent = z->parent;
+          x->color = Black;
+          delete z;
+        }
+        else {
+          z->parent->rightChild = x;
+          x->parent = z->parent;
+          x->color = Black;
+          delete z;
+        }
+        //we are done
+      }
+      //the replacement is black so we are done
+      else{
+        //Black cant have 1 black child
+      }
+    }
     return 1;
   }
 
 
   return 0;
-}
-/***************************************************************************/
-void run2Nil(Node<keytype, valuetype> *z) { //no children
-  Node<keytype, valuetype> *x = nullptr;
-  Node<keytype, valuetype> *y;
-
-  if(z->parent == nullptr) { //empty tree
-    delete z;
-    root = nullptr;
-    return;
-  }
-
-  if(z == z->parent->leftChild){
-    z->parent->leftChild = x;
-  }
-  else {
-    z->parent->rightChild = x;
-  }
-
-  if(z->color == Red) {
-    //the node were deleting is red and its replacement is nil
-    delete z;
-    //we are done
-  }
-  //the node we deleted is black and its replacement is nil meaning black
-  else{
-    cout << "here" << endl;
-    if(z->key == 338){
-      cout << "here 2 " << z->parent->key << endl;
-    }
-    y = z->parent;
-    delete z;
-    runCases(y, x);
-  }
-}
-/***************************************************************************/
-void run1Nil(Node<keytype, valuetype> *z) {
-  Node<keytype, valuetype> *x;
-  //set replacement
-  if (z->leftChild == nullptr && z->rightChild != nullptr) {
-    x = z->rightChild;
-  }
-  else {
-    x = z->leftChild;
-  }
-
-  if(z->color == Red) {
-    //Never happens
-  }
-  else{ //the node we deleted is black
-    //z is black and x is red. Color x black and we are done
-    if(x->color == Red){
-      if(z->parent == nullptr){//deleting root so only 2 things left
-        root = x;
-        x->parent = z->parent;
-        delete z;
-      }
-      else if(z == z->parent->leftChild){
-        z->parent->leftChild = x;
-        x->parent = z->parent;
-        x->color = Black;
-        delete z;
-      }
-      else {
-        z->parent->rightChild = x;
-        x->parent = z->parent;
-        x->color = Black;
-        delete z;
-      }
-      //we are done
-    }
-    //the replacement is black so we are done
-    else{
-      //Black cant have black child
-    }
-  }
-
-
-}
-/***************************************************************************/
-void run0Nil(Node<keytype, valuetype> *z) {
-  Node<keytype, valuetype> *y;
-  Node<keytype, valuetype> *x;
-  Node<keytype, valuetype> *v;
-
-  x = z->rightChild;
-  x = runSuccesor(x);
-
-  y = x->rightChild;
-  v = x;
-
-  if(x == x->parent->leftChild){
-    x->parent->leftChild = y;
-  }
-  else {
-    x->parent->rightChild = y;
-  }
-
-  if(x->parent->key != z->key){
-    v = x->parent;
-  }
-
-
-  if(z->color == Red) {
-    //z is red and x is nil or red
-    if(x == nullptr || x->color == Red){
-      x = runReplace(z,x);
-      //we are done
-    }
-    //The node we deleted is red and the replacement is black
-    else {
-      x = runReplace(z,x);
-      x->color = Red;
-      x = y; //x is now the replacements new right child
-      runCases(v, x);
-    }
-  }
-  else{ //the node we deleted is black
-    //z is black and x is red. Color x black and we are done
-    if(x->color == Red) {
-      x = runReplace(z,x);
-      x->color = Black;
-    }
-    //the node we deleted is black and the replacement is black
-    else {
-      runReplace(z,x);
-      x = y; //x is now the replacements new right child
-      runCases(z, x);
-    }
-
-  }
-
-
 }
 /***************************************************************************/
 Node<keytype, valuetype> *runReplace(Node<keytype, valuetype> *z, Node<keytype, valuetype> *x) {
@@ -686,6 +680,7 @@ Node<keytype, valuetype> *runReplace(Node<keytype, valuetype> *z, Node<keytype, 
 /***************************************************************************/
 void runCases(Node<keytype, valuetype> *v, Node<keytype, valuetype> *x) {
   Node<keytype, valuetype> *w;
+  Node<keytype, valuetype> *z;
 
   //CASES
   // 0 - Node x is Red
@@ -700,9 +695,8 @@ void runCases(Node<keytype, valuetype> *v, Node<keytype, valuetype> *x) {
   // 4 - Node x is black and its sibling w is black and
     // 4 - If x is the left child, w's right child is red
     // 4 - If x is the right child, w's left child is red
+
   //Set up sibling w
-
-
   if(x == nullptr){
     if(v->rightChild == nullptr){
       w = v->leftChild;
@@ -774,6 +768,8 @@ void runCases(Node<keytype, valuetype> *v, Node<keytype, valuetype> *x) {
         }
 
         w = v->rightChild;
+        fixRank(v);
+        fixRank(w);
       }
       else{
         //do a right rotation
@@ -796,15 +792,19 @@ void runCases(Node<keytype, valuetype> *v, Node<keytype, valuetype> *x) {
         }
 
         w = v->leftChild;
+        x = v->rightChild;
+        fixRank(v);
+        fixRank(w);
       }
     }
   }
-    //CASE 2
-    // - Color w red
-    // - Set x = x.p
-      // - If our new x is red, color x black. we are done.
-      // - If our new x is black, decide on cases 1, 2, 3, or 4 from here.
-      // Note that we have a new w now
+
+  //CASE 2
+  // - Color w red
+  // - Set x = x.p
+    // - If our new x is red, color x black. we are done.
+    // - If our new x is black, decide on cases 1, 2, 3, or 4 from here.
+    // Note that we have a new w now
     if((w->leftChild == nullptr || w->leftChild->color == Black) && (w->rightChild == nullptr || w->rightChild->color == Black)){
       x = v;
       w->color = Red;
@@ -815,14 +815,16 @@ void runCases(Node<keytype, valuetype> *v, Node<keytype, valuetype> *x) {
       }
       else {
         v = v->parent;
+
         if(v == nullptr){
           return;
         }
+
         runCases(v,x);
         return;
-        //should never happen. node we deleted was black with a black parent
       }
     }
+
     //CASE 3
     // - Color w's child black
       // - If x is the left child, color w.left black
@@ -835,6 +837,7 @@ void runCases(Node<keytype, valuetype> *v, Node<keytype, valuetype> *x) {
       // If x is the left child set w = x.p.right
       // If x is the left child set w = x.p.left
     // - Proceed to case 4
+
     if(w->leftChild != nullptr){
       if(x != nullptr && w->color == Black){
         if((x->color == Black && x == x->parent->leftChild) && (w->leftChild->color == Red && (w->rightChild == nullptr || w->rightChild->color == Black))){
@@ -843,6 +846,13 @@ void runCases(Node<keytype, valuetype> *v, Node<keytype, valuetype> *x) {
           w = w->leftChild;
           //do a right rotation
           w = simpleRight(w);
+
+          w->color = Red;
+          w->rightChild->color = Black;
+          //do a right rotation
+          w = w->rightChild;
+          rotateLeft(w);
+          return;
           //proceed to case 4
         }
       }
@@ -853,6 +863,13 @@ void runCases(Node<keytype, valuetype> *v, Node<keytype, valuetype> *x) {
           w = w->leftChild;
           //do a right rotation
           w = simpleRight(w);
+
+          w->color = Red;
+          w->rightChild->color = Black;
+          //do a right rotation
+          w = w->rightChild;
+          rotateLeft(w);
+          return;
           //proceed to case 4
         }
       }
@@ -865,6 +882,13 @@ void runCases(Node<keytype, valuetype> *v, Node<keytype, valuetype> *x) {
           //do a left rotation
           w = w->rightChild;
           w = simpleLeft(w);
+
+          w->color = Red;
+          w->leftChild->color = Black;
+          //do a right rotation
+          w = w->leftChild;
+          rotateRight(w);
+          return;
           //proceed to case 4
         }
       }
@@ -872,14 +896,20 @@ void runCases(Node<keytype, valuetype> *v, Node<keytype, valuetype> *x) {
         if((w = w->parent->leftChild) && (w->rightChild->color == Red && (w->leftChild == nullptr || w->leftChild->color == Black))){
           w->rightChild->color = Black;
           w->color = Black;
-          //do a left rotation
+          //do a simple left rotation
           w = w->rightChild;
           w = simpleLeft(w);
+
+          w->color = Red;
+          w->leftChild->color = Black;
+          //do a right rotation
+          w = w->leftChild;
+          rotateRight(w);
+          return;
           //proceed to case 4
         }
       }
     }
-
 
     //CASE 4
     // - Color w the same color as x.p
