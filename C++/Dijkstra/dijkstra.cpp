@@ -63,7 +63,7 @@ struct Dijkstra {
 /*************************************************************/
 class MyGraph { //Graph with weighted Nodes and Edges
 public:
-   Visited *check;
+  Visited *check;
   Dijkstra *top;
   MyEdge *headEdge;
   MyNode **head;                //adjacency list as array of pointers
