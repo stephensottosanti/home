@@ -9,7 +9,7 @@
 #include <sys/stat.h>
 
 /* constants */
-#define PAGES 256       // Entries 
+#define PAGES 256       // Entries
 #define PAGE_SIZE 256   // Bytes
 #define TLB_ENTRIES 16
 #define FRAMES 256      // Entries
@@ -79,6 +79,11 @@ int main(int argc, const char *argv[]){
   int backing_ptr_fd = open(secondary_memory, O_RDONLY);
   backing_ptr = mmap(0, PHYSICAL_MEMORY, PROT_READ, MAP_PRIVATE, backing_ptr_fd, 0);
 
+  if(backing_ptr == MAP_FAILED){
+    perror("Could not mmap\n");
+    return 1;
+  }
+
   /* fill all the pages with -1 */
   for(int i = 0; i < PAGES; i++) { page_table[i] = -1; }
 
@@ -105,7 +110,7 @@ int main(int argc, const char *argv[]){
     int page_number = (logical_address >> SHIFT) & MASK;
 
     int frame_number = search_tlb(page_number);
-    
+
     /* TLB hits when frame_number does not equal -1 */
     if(frame_number != -1) {
       tlb_hits++;
@@ -133,7 +138,7 @@ int main(int argc, const char *argv[]){
 
     int physical_address = (frame_number * FRAME_SIZE) + offset;
     signed char value = physical_memory[physical_address];
-        
+
     printf("Logical address: %d  physicall address:  %d  Value:  %d\n", logical_address, physical_address, value);
   }
 
